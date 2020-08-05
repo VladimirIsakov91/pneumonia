@@ -1,11 +1,13 @@
 import torch
 import torch.nn as nn
 from torch.optim import Adam
+from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
 from ignite.engine import Engine, Events
 from ignite.metrics import Accuracy
 
 from model import CNN
+from dataset import ImageDataset
 
 
 def update(engine, batch):
@@ -24,6 +26,7 @@ def validate(engine, batch):
 
     sample, labels = batch
     prediction = net(sample.cuda())
+
     return prediction.cpu(), labels
 
 
@@ -57,6 +60,9 @@ def scheduler_step():
 if __name__ == '__main__':
 
     net = CNN()
+    data = ImageDataset(directory='/home/vladimir/MachineLearning/Datasets/chest_xray/train/NORMAL', labels=None)
+    loader = DataLoader(dataset=data, batch_size=64, shuffle=True)
+
     loss_fn = nn.CrossEntropyLoss()
     optimizer = Adam(params=net.parameters(), lr=0.001, weight_decay=0.0001)
     scheduler = StepLR(optimizer=optimizer, step_size=10, gamma=0.1)

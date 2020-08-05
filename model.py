@@ -9,5 +9,6 @@ class CNN(nn.Module):
     def forward(self):
         pass
 
+
 if __name__ == '__main__':
     pass

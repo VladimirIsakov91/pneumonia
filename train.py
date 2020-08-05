@@ -6,7 +6,7 @@ from torch.optim.lr_scheduler import StepLR
 from ignite.engine import Engine, Events
 from ignite.metrics import Accuracy
 
-from model import CNN
+from model import cnn
 from dataset import ImageDataset
 
 
@@ -59,7 +59,7 @@ def scheduler_step():
 
 if __name__ == '__main__':
 
-    net = CNN()
+    net = cnn()
     data = ImageDataset(directory='/home/vladimir/MachineLearning/Datasets/chest_xray/train/NORMAL', labels=None)
     loader = DataLoader(dataset=data, batch_size=64, shuffle=True)
 
@@ -76,6 +76,8 @@ if __name__ == '__main__':
     validator = Engine(validate)
     Accuracy().attach(engine=validator, name='val_acc')
     validator.add_event_handler(event_name=Events.EPOCH_COMPLETED, handler=log_validation)
+
+    trainer.run(loader, max_epochs=40)
 
 
 

@@ -16,13 +16,18 @@ class ImageDataset(Dataset):
         return len(os.listdir(self.directory))
 
     def __getitem__(self, item):
-        image = Image.open(os.path.join(self.directory, item))
+
+        image = Image.open(os.path.join(self.directory, item)).resize((64, 64))
         image = numpy.array(image).astype(dtype=numpy.float32)
+        image = image[numpy.newaxis, :, :]
+
         return image, 0
 
 
 if __name__ == '__main__':
 
     dataset = ImageDataset('/home/vladimir/MachineLearning/Datasets/chest_xray/train/NORMAL',  None)
+    image = dataset['IM-0115-0001.jpeg'][0]
+    print(image.shape)
 
 

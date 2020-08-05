@@ -41,27 +41,32 @@ def output_transform(output):
 def log_training(engine):
 
     loss = engine.state.output['loss']
-    accuracy = engine.state.metrics['train_acc']
+    tr_accuracy = engine.state.metrics['train_acc']
     lr = optimizer.param_groups[0]['lr']
     epoch = engine.state.epoch
-    print('Epoch: {0}, Loss: {1}, Accuracy: {2}, Learning Rate: {3}'.format(epoch, loss, accuracy, lr))
 
+    validator.run(loader, max_epochs=1)
+    val_accuracy = validator.state.metrics['val_acc']
 
-def log_validation(engine):
-
-    accuracy = engine.state.metrics['train_acc']
-    print('Validation accuracy: {0}'.format(accuracy))
+    print('Epoch: {0}, Loss: {1}, Training Accuracy: {2}, Validation Accuracy: {3}, Learning Rate: {4}'
+          .format(epoch, loss, tr_accuracy, val_accuracy, lr))
 
 
 def scheduler_step():
     scheduler.step()
 
 
+def global_step_transform(engine, *args, **kwargs):
+    return engine.state.epoch
+
+
 if __name__ == '__main__':
 
     net = cnn()
+    net.cuda()
+
     data = ImageDataset(directory='/home/vladimir/MachineLearning/Datasets/chest_xray/train/NORMAL', labels=None)
-    loader = DataLoader(dataset=data, batch_size=64, shuffle=True)
+    loader = DataLoader(dataset=data, batch_size=64, shuffle=True, num_workers=6)
 
     loss_fn = nn.CrossEntropyLoss()
     optimizer = Adam(params=net.parameters(), lr=0.001, weight_decay=0.0001)
@@ -75,9 +80,9 @@ if __name__ == '__main__':
 
     validator = Engine(validate)
     Accuracy().attach(engine=validator, name='val_acc')
-    validator.add_event_handler(event_name=Events.EPOCH_COMPLETED, handler=log_validation)
 
     trainer.run(loader, max_epochs=40)
+
 
 
 

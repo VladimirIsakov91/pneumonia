@@ -3,7 +3,7 @@ import os
 import numpy
 from PIL import Image
 from matplotlib import pyplot as plt
-
+from torch.nn import CrossEntropyLoss
 
 class ImageDataset(Dataset):
 
@@ -11,23 +11,27 @@ class ImageDataset(Dataset):
 
         self.directory = directory
         self.labels = labels
+        self.files = os.listdir(self.directory)
+
+        self._prepare_data()
+
+    def _prepare_data(self):
+
+        images = (Image.open(os.path.join(self.directory, file)).resize((64, 64)) for file in self.files)
+        self.data = [numpy.expand_dims(numpy.array(image).astype(dtype=numpy.float32), axis=0) for image in images]
+        self.data = numpy.stack(self.data, axis=0)
 
     def __len__(self):
         return len(os.listdir(self.directory))
 
     def __getitem__(self, item):
 
-        image = Image.open(os.path.join(self.directory, item)).resize((64, 64))
-        image = numpy.array(image).astype(dtype=numpy.float32)
-        image = image[numpy.newaxis, :, :]
-
-        return image, 0
+        return self.data[item], 0
 
 
 if __name__ == '__main__':
 
-    dataset = ImageDataset('/home/vladimir/MachineLearning/Datasets/chest_xray/train/NORMAL',  None)
-    image = dataset['IM-0115-0001.jpeg'][0]
-    print(image.shape)
+    pass
+
 
 

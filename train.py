@@ -6,6 +6,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.cuda.amp import GradScaler, autocast
 from ignite.engine import Engine, Events
 from ignite.metrics import Accuracy, Loss, ConfusionMatrix
+import logging
 
 from model import cnn
 from dataset import ImageDataset
@@ -58,7 +59,7 @@ def log_training(engine):
     validator.run(val_loader, max_epochs=1)
     val_accuracy = validator.state.metrics['val_acc']
 
-    print('Epoch: {0}, Loss: {1}, Training Accuracy: {2}, Validation Accuracy: {3}, Learning Rate: {4}'
+    logger.info('Epoch: {0}, Loss: {1}, Training Accuracy: {2}, Validation Accuracy: {3}, Learning Rate: {4}'
           .format(epoch, round(loss, 5), round(tr_accuracy, 3), round(val_accuracy, 3), lr))
 
 
@@ -69,10 +70,15 @@ def scheduler_step():
 def confusion_matrix(engine):
     validator.run(val_loader, max_epochs=1)
     conf = validator.state.metrics['conf']
-    print(conf)
+    logger.info(conf)
 
 
 if __name__ == '__main__':
+
+    logging.basicConfig(level=logging.INFO)
+    logging.getLogger('ignite.engine.engine.Engine').propagate = False
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
 
     net = cnn()
     net.cuda()

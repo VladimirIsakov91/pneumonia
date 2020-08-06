@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
 from torch.cuda.amp import GradScaler, autocast
 from ignite.engine import Engine, Events
-from ignite.metrics import Accuracy
+from ignite.metrics import Accuracy, Loss, ConfusionMatrix
 
 from model import cnn
 from dataset import ImageDataset
@@ -66,6 +66,12 @@ def scheduler_step():
     scheduler.step()
 
 
+def confusion_matrix(engine):
+    validator.run(val_loader, max_epochs=1)
+    conf = validator.state.metrics['conf']
+    print(conf)
+
+
 if __name__ == '__main__':
 
     net = cnn()
@@ -75,7 +81,7 @@ if __name__ == '__main__':
     val = ImageDataset('./val.zarr')
 
     loader = DataLoader(dataset=data, batch_size=64, shuffle=True, num_workers=6)
-    val_loader = DataLoader(dataset=val, batch_size=64, shuffle=True, num_workers=6)
+    val_loader = DataLoader(dataset=val, batch_size=64, shuffle=False)
 
     loss_fn = nn.CrossEntropyLoss()
     optimizer = Adam(params=net.parameters(), lr=0.001, weight_decay=0.0001)
@@ -87,11 +93,13 @@ if __name__ == '__main__':
     Accuracy(output_transform=output_transform).attach(engine=trainer, name='train_acc')
     trainer.add_event_handler(event_name=Events.EPOCH_COMPLETED, handler=log_training)
     trainer.add_event_handler(event_name=Events.EPOCH_COMPLETED, handler=scheduler_step)
+    trainer.add_event_handler(event_name=Events.COMPLETED, handler=confusion_matrix)
 
     validator = Engine(validate)
     Accuracy().attach(engine=validator, name='val_acc')
+    ConfusionMatrix(num_classes=2).attach(engine=validator, name='conf')
 
-    trainer.run(loader, max_epochs=40)
+    trainer.run(loader, max_epochs=10)
 
 
 

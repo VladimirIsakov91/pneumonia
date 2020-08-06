@@ -23,14 +23,15 @@ def update(engine, batch):
     net.train()
     optimizer.zero_grad()
 
-    #with autocast():
-    prediction = net(sample.cuda())
-    loss = loss_fn(prediction, labels.cuda())
-    loss.backward()
-    optimizer.step()
-    #scaler.scale(loss).backward()
-    #scaler.step(optimizer)
-    #scaler.update()
+    with autocast():
+        prediction = net(sample.cuda())
+        loss = loss_fn(prediction, labels.cuda())
+    #loss.backward()
+    #optimizer.step()
+
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()
 
     output = {'loss': loss.item(), 'labels': labels, 'prediction': prediction.cpu()}
 
@@ -50,7 +51,7 @@ def output_transform(output):
 
     y_pred = output['prediction']
     y = output['labels']
-    return y_pred, y
+    return y_pred.float(), y
 
 
 def log_training(engine):
@@ -86,7 +87,7 @@ if __name__ == '__main__':
     step_size = 5
     gamma = 0.1
     epochs = 20
-    patience = 3
+    patience = 10
 
     logging.basicConfig(level=logging.INFO)
     logging.getLogger('ignite.engine.engine.Engine').propagate = False

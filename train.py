@@ -11,6 +11,7 @@ import logging
 
 from model import cnn
 from dataset import ImageDataset
+from transformations import train_tr, val_tr
 
 
 def update(engine, batch):
@@ -90,8 +91,8 @@ if __name__ == '__main__':
     net = cnn()
     net.cuda()
 
-    data = ImageDataset('./output.zarr')
-    val = ImageDataset('./val.zarr')
+    data = ImageDataset('./train.zarr', transform=train_tr)
+    val = ImageDataset('./val.zarr', transform=val_tr)
 
     loader = DataLoader(dataset=data, batch_size=64, shuffle=True, num_workers=6)
     val_loader = DataLoader(dataset=val, batch_size=64, shuffle=False)

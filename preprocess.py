@@ -20,18 +20,17 @@ class Preprocessor:
         if resize:
             image = image.resize(resize)
 
-        image = numpy.array(image).astype(dtype=numpy.float32)
-        image = image[numpy.newaxis, :, :]
+        image = numpy.array(image)
 
         return image
 
     def _preprocess(self, collection, chunks=64, size=None):
 
-        c, h, w = size
+        h, w = size
         images = [self.read_image(file, (h, w)) for file in collection]
-        images = [da.from_delayed(image, shape=(c, h, w), dtype=numpy.float32) for image in images]
+        images = [da.from_delayed(image, shape=(h, w), dtype=numpy.uint8) for image in images]
         images = da.stack(images, axis=0)
-        images = images.rechunk(chunks=(chunks, c, h, w))
+        images = images.rechunk(chunks=(chunks, h, w))
 
         return images
 
@@ -73,13 +72,10 @@ if __name__ == '__main__':
 
     labels = numpy.array(labels).astype(dtype=numpy.int64)
 
-    #p.preprocess(collection=data,
-    #             location='./val.zarr',
-    #             chunks=256,
-    #             size=(1, 64, 64),
-    #             labels=labels)
+    p.preprocess(collection=data,
+                 location='./val.zarr',
+                 chunks=256,
+                 size=(64, 64),
+                 labels=labels)
 
-    data = zarr.open('./output.zarr', 'r')
 
-    x = data['labels']
-    print(x[:])

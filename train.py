@@ -56,10 +56,6 @@ def scheduler_step():
     scheduler.step()
 
 
-def global_step_transform(engine, *args, **kwargs):
-    return engine.state.epoch
-
-
 if __name__ == '__main__':
 
     net = cnn()

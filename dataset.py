@@ -2,8 +2,7 @@ from torch.utils.data import Dataset
 import os
 import numpy
 from PIL import Image
-from matplotlib import pyplot as plt
-from torch.nn import CrossEntropyLoss
+
 
 class ImageDataset(Dataset):
 

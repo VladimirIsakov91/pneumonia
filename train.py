@@ -11,7 +11,7 @@ from ignite.contrib.handlers.neptune_logger import *
 import logging
 import os
 
-from model import cnn
+from model import Network
 from dataset import ImageDataset
 from transformations import train_tr, val_tr
 
@@ -26,8 +26,6 @@ def update(engine, batch):
     with autocast():
         prediction = net(sample.cuda())
         loss = loss_fn(prediction, labels.cuda())
-    #loss.backward()
-    #optimizer.step()
 
     scaler.scale(loss).backward()
     scaler.step(optimizer)
@@ -81,12 +79,12 @@ def end_logging(engine): nplogger.close()
 
 if __name__ == '__main__':
 
-    batch_size = 64
+    batch_size = 256
     lr = 0.001
-    weight_decay = 0.0001
+    weight_decay = 0.001
     step_size = 5
     gamma = 0.1
-    epochs = 20
+    epochs = 40
     patience = 10
 
     logging.basicConfig(level=logging.INFO)
@@ -104,11 +102,11 @@ if __name__ == '__main__':
                                    'gamma': gamma,
                                    'weight_decay': weight_decay})
 
-    net = cnn()
+    net = Network()
     net.cuda()
 
     data = ImageDataset('./train.zarr', transform=train_tr)
-    val = ImageDataset('./val.zarr', transform=val_tr)
+    val = ImageDataset('./test.zarr', transform=val_tr)
 
     loader = DataLoader(dataset=data, batch_size=batch_size, shuffle=True, num_workers=6)
     val_loader = DataLoader(dataset=val, batch_size=batch_size, shuffle=False)

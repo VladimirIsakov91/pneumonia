@@ -6,6 +6,7 @@ from torch.optim.lr_scheduler import StepLR
 from torch.cuda.amp import GradScaler, autocast
 from ignite.engine import Engine, Events
 from ignite.metrics import Accuracy, Loss, ConfusionMatrix
+from ignite.handlers import EarlyStopping
 import logging
 
 from model import cnn
@@ -63,14 +64,20 @@ def log_training(engine):
           .format(epoch, round(loss, 5), round(tr_accuracy, 3), round(val_accuracy, 3), lr))
 
 
-def scheduler_step():
-    scheduler.step()
+def scheduler_step(): scheduler.step()
 
 
 def confusion_matrix(engine):
+
     validator.run(val_loader, max_epochs=1)
     conf = validator.state.metrics['conf']
     logger.info(conf)
+
+
+def score_function(engine):
+
+    acc = engine.state.metrics['val_acc']
+    return acc
 
 
 if __name__ == '__main__':
@@ -97,15 +104,20 @@ if __name__ == '__main__':
     trainer = Engine(update)
 
     Accuracy(output_transform=output_transform).attach(engine=trainer, name='train_acc')
+
     trainer.add_event_handler(event_name=Events.EPOCH_COMPLETED, handler=log_training)
     trainer.add_event_handler(event_name=Events.EPOCH_COMPLETED, handler=scheduler_step)
     trainer.add_event_handler(event_name=Events.COMPLETED, handler=confusion_matrix)
 
     validator = Engine(validate)
+
     Accuracy().attach(engine=validator, name='val_acc')
     ConfusionMatrix(num_classes=2).attach(engine=validator, name='conf')
 
-    trainer.run(loader, max_epochs=10)
+    handler = EarlyStopping(patience=10, score_function=score_function, trainer=trainer)
+    validator.add_event_handler(event_name=Events.COMPLETED, handler=handler)
+
+    trainer.run(loader, max_epochs=20)
 
 
 

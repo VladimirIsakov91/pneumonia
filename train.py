@@ -13,8 +13,12 @@ from dataset import ImageDataset
 def update(engine, batch):
 
     sample, labels = batch
+
+    net.train()
+    optimizer.zero_grad()
     prediction = net(sample.cuda())
-    loss = loss_fn(prediction.cpu(), labels)
+    loss = loss_fn(prediction, labels.cuda())
+
     loss.backward()
     optimizer.step()
     output = {'loss': loss.item(), 'labels': labels, 'prediction': prediction.cpu()}
@@ -24,10 +28,11 @@ def update(engine, batch):
 
 def validate(engine, batch):
 
+    net.eval()
     sample, labels = batch
-    prediction = net(sample.cuda())
-
-    return prediction.cpu(), labels
+    with torch.no_grad():
+        prediction = net(sample.cuda())
+        return prediction.cpu(), labels
 
 
 def output_transform(output):
@@ -45,11 +50,11 @@ def log_training(engine):
     lr = optimizer.param_groups[0]['lr']
     epoch = engine.state.epoch
 
-    validator.run(loader, max_epochs=1)
+    validator.run(val_loader, max_epochs=1)
     val_accuracy = validator.state.metrics['val_acc']
 
     print('Epoch: {0}, Loss: {1}, Training Accuracy: {2}, Validation Accuracy: {3}, Learning Rate: {4}'
-          .format(epoch, loss, tr_accuracy, val_accuracy, lr))
+          .format(epoch, round(loss, 5), round(tr_accuracy, 3), round(val_accuracy, 3), lr))
 
 
 def scheduler_step():
@@ -61,12 +66,15 @@ if __name__ == '__main__':
     net = cnn()
     net.cuda()
 
-    data = ImageDataset(directory='/home/vladimir/MachineLearning/Datasets/chest_xray/train/NORMAL', labels=None)
+    data = ImageDataset('./output.zarr')
+    val = ImageDataset('./val.zarr')
+
     loader = DataLoader(dataset=data, batch_size=64, shuffle=True, num_workers=6)
+    val_loader = DataLoader(dataset=val, batch_size=64, shuffle=True, num_workers=6)
 
     loss_fn = nn.CrossEntropyLoss()
     optimizer = Adam(params=net.parameters(), lr=0.001, weight_decay=0.0001)
-    scheduler = StepLR(optimizer=optimizer, step_size=10, gamma=0.1)
+    scheduler = StepLR(optimizer=optimizer, step_size=5, gamma=0.1)
 
     trainer = Engine(update)
 

@@ -29,7 +29,7 @@ class Preprocessor:
 
         c, h, w = size
         images = [self.read_image(file, (h, w)) for file in collection]
-        images = [da.from_delayed(image, shape=(c, h, w), dtype=float) for image in images]
+        images = [da.from_delayed(image, shape=(c, h, w), dtype=numpy.float32) for image in images]
         images = da.stack(images, axis=0)
         images = images.rechunk(chunks=(chunks, c, h, w))
 
@@ -63,18 +63,23 @@ if __name__ == '__main__':
 
     p = Preprocessor()
 
-    normal = get_data('/home/vladimir/MachineLearning/Datasets/chest_xray/train/NORMAL')
-    pneumonia = get_data('/home/vladimir/MachineLearning/Datasets/chest_xray/train/PNEUMONIA')
+    normal = get_data('/home/vladimir/MachineLearning/Datasets/chest_xray/val/NORMAL')
+    pneumonia = get_data('/home/vladimir/MachineLearning/Datasets/chest_xray/val/PNEUMONIA')
     n_labels = [0 for _ in range(len(normal))]
     p_labels = [1 for _ in range(len(pneumonia))]
 
     data = normal + pneumonia
     labels = n_labels + p_labels
 
-    labels = numpy.array(labels).astype(dtype=numpy.int32)
+    labels = numpy.array(labels).astype(dtype=numpy.int64)
 
     #p.preprocess(collection=data,
-    #             location='./output.zarr',
+    #             location='./val.zarr',
     #             chunks=256,
     #             size=(1, 64, 64),
     #             labels=labels)
+
+    data = zarr.open('./output.zarr', 'r')
+
+    x = data['labels']
+    print(x[:])

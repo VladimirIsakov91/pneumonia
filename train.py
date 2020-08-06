@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import StepLR
+from torch.cuda.amp import GradScaler, autocast
 from ignite.engine import Engine, Events
 from ignite.metrics import Accuracy
 
@@ -16,11 +17,15 @@ def update(engine, batch):
 
     net.train()
     optimizer.zero_grad()
-    prediction = net(sample.cuda())
-    loss = loss_fn(prediction, labels.cuda())
 
-    loss.backward()
-    optimizer.step()
+    with autocast():
+        prediction = net(sample.cuda())
+        loss = loss_fn(prediction, labels.cuda())
+
+    scaler.scale(loss).backward()
+    scaler.step(optimizer)
+    scaler.update()
+
     output = {'loss': loss.item(), 'labels': labels, 'prediction': prediction.cpu()}
 
     return output
@@ -74,6 +79,7 @@ if __name__ == '__main__':
 
     loss_fn = nn.CrossEntropyLoss()
     optimizer = Adam(params=net.parameters(), lr=0.001, weight_decay=0.0001)
+    scaler = GradScaler()
     scheduler = StepLR(optimizer=optimizer, step_size=5, gamma=0.1)
 
     trainer = Engine(update)

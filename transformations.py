@@ -1,7 +1,7 @@
 import albumentations as A
 
 train_tr = A.Compose([
-    A.CLAHE(p=1),
+    A.CLAHE(p=0.2),
     A.Flip(p=0.3),
     A.OneOf([A.GaussianBlur(),
              A.MedianBlur(),
@@ -13,4 +13,4 @@ train_tr = A.Compose([
 ])
 
 val_tr = A.Compose([
-    A.CLAHE(p=1)])
+])

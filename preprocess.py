@@ -62,8 +62,8 @@ if __name__ == '__main__':
 
     p = Preprocessor()
 
-    normal = get_data('/home/vladimir/MachineLearning/Datasets/chest_xray/test/NORMAL')
-    pneumonia = get_data('/home/vladimir/MachineLearning/Datasets/chest_xray/test/PNEUMONIA')
+    normal = get_data('/home/vladimir/MachineLearning/Datasets/chest_xray/train/NORMAL')
+    pneumonia = get_data('/home/vladimir/MachineLearning/Datasets/chest_xray/train/PNEUMONIA')
     n_labels = [0 for _ in range(len(normal))]
     p_labels = [1 for _ in range(len(pneumonia))]
 
@@ -73,9 +73,11 @@ if __name__ == '__main__':
     labels = numpy.array(labels).astype(dtype=numpy.int64)
 
     p.preprocess(collection=data,
-                 location='./test.zarr',
+                 location='./train128.zarr',
                  chunks=256,
-                 size=(64, 64),
+                 size=(128, 128),
                  labels=labels)
+
+    print('Finished')
 
 

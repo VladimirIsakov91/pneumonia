@@ -11,7 +11,7 @@ from ignite.contrib.handlers.neptune_logger import *
 import logging
 import os
 
-from model import Network
+from model import FCN
 from dataset import ImageDataset
 from transformations import train_tr, val_tr
 
@@ -62,8 +62,8 @@ def log_training(engine):
     validator.run(val_loader)
     val_accuracy = validator.state.metrics['val_acc']
 
-    logger.info('Epoch: {0}, Loss: {1}, Training Accuracy: {2}, Validation Accuracy: {3}, Learning Rate: {4}'
-          .format(epoch, round(loss, 5), round(tr_accuracy, 3), round(val_accuracy, 3), lr))
+    logger.info('Epoch: {0}, Loss: {1}, Training Accuracy: {2}%, Validation Accuracy: {3}%, Learning Rate: {4}'
+          .format(epoch, round(loss, 5), round(tr_accuracy*100, 2), round(val_accuracy*100, 2), lr))
 
 
 def confusion_matrix(engine):
@@ -102,7 +102,7 @@ if __name__ == '__main__':
                                    'gamma': gamma,
                                    'weight_decay': weight_decay})
 
-    net = Network()
+    net = FCN()
     net.cuda()
 
     data = ImageDataset('./train.zarr', transform=train_tr)
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     ConfusionMatrix(num_classes=2).attach(engine=validator, name='conf')
 
     handler = EarlyStopping(patience=patience, score_function=score_function, trainer=trainer)
-    #validator.add_event_handler(event_name=Events.COMPLETED, handler=handler)
+    validator.add_event_handler(event_name=Events.COMPLETED, handler=handler)
 
     nplogger.attach(trainer,
                   log_handler=OutputHandler(tag='train',

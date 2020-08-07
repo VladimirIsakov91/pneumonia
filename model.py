@@ -3,27 +3,11 @@ import torch.nn.functional as F
 import torch
 
 
-class Maxout(nn.Module):
-
-    def __init__(self, in_neurons, out_neurons):
-
-        super(Maxout, self).__init__()
-        self.linear1 = nn.Linear(in_neurons, out_neurons)
-        self.linear2 = nn.Linear(in_neurons, out_neurons)
-
-    def forward(self, x):
-
-        x1 = self.linear1(x)
-        x2 = self.linear2(x)
-        x = torch.max(x1, x2)
-        return x
-
-
-class Network(nn.Module):
+class FCN(nn.Module):
 
     def __init__(self):
 
-        super(Network, self).__init__()
+        super(FCN, self).__init__()
 
         self.dropout = nn.Dropout2d(p=0.2)
         self.batch_norm1 = nn.BatchNorm2d(8)
@@ -31,11 +15,13 @@ class Network(nn.Module):
         self.batch_norm3 = nn.BatchNorm2d(32)
         self.batch_norm4 = nn.BatchNorm2d(16)
         self.batch_norm5 = nn.BatchNorm2d(2)
+
         self.conv1 = nn.Conv2d(in_channels=1, out_channels=8, kernel_size=(3, 3))
         self.conv2 = nn.Conv2d(in_channels=8, out_channels=16, kernel_size=(3, 3))
         self.conv3 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=(3, 3))
         self.conv4 = nn.Conv2d(in_channels=32, out_channels=16, kernel_size=(1, 1))
         self.conv5 = nn.Conv2d(in_channels=16, out_channels=2, kernel_size=(1, 1))
+
         self.global_pool = nn.AdaptiveMaxPool3d((2, 1, 1))
         self.padding = 1
 
@@ -72,4 +58,5 @@ class Network(nn.Module):
         x = torch.squeeze(x)
 
         return x
+
 

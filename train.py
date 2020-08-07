@@ -132,7 +132,7 @@ if __name__ == '__main__':
     ConfusionMatrix(num_classes=2).attach(engine=validator, name='conf')
 
     handler = EarlyStopping(patience=patience, score_function=score_function, trainer=trainer)
-    validator.add_event_handler(event_name=Events.COMPLETED, handler=handler)
+    #validator.add_event_handler(event_name=Events.COMPLETED, handler=handler)
 
     nplogger.attach(trainer,
                   log_handler=OutputHandler(tag='train',
